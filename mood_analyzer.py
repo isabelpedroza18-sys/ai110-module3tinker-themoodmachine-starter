@@ -9,6 +9,8 @@ This class starts with very simple logic:
   - Convert that score into a mood label
 """
 
+import re
+import string
 from typing import List, Dict, Tuple, Optional
 
 from dataset import POSITIVE_WORDS, NEGATIVE_WORDS
@@ -53,8 +55,28 @@ class MoodAnalyzer:
           - Normalize repeated characters ("soooo" -> "soo")
         """
         cleaned = text.strip().lower()
+        
+        # Extract emojis and emoticons first (before removing punctuation)
+        # Matches Unicode emojis and common emoticons like :), :(, :D, etc.
+        emoji_pattern = r'[\U0001F600-\U0001F64F]|[\U0001F300-\U0001F5FF]|[\U0001F680-\U0001F6FF]|[\U0001F1E0-\U0001F1FF]|[\U00002702-\U000027B0]|:\)|:\(|:D|;-?\)|:-?P|:-?/'
+        emojis = re.findall(emoji_pattern, cleaned)
+        
+        # Remove emojis temporarily to process text
+        cleaned = re.sub(emoji_pattern, '', cleaned)
+        
+        # Remove punctuation
+        cleaned = ''.join(char for char in cleaned if char not in string.punctuation)
+        
+        # Normalize repeated characters: replace 3+ identical chars with 2
+        # E.g., "soooo" -> "soo", "!!!" -> "!!"
+        cleaned = re.sub(r'(.)\1{2,}', r'\1\1', cleaned)
+        
+        # Split on whitespace
         tokens = cleaned.split()
-
+        
+        # Add extracted emojis back as individual tokens
+        tokens.extend(emojis)
+        
         return tokens
 
     # ---------------------------------------------------------------------
@@ -75,15 +97,52 @@ class MoodAnalyzer:
           - Give some words higher weights than others (for example "hate" < "annoyed")
           - Treat emojis or slang (":)", "lol", "💀") as strong signals
         """
-        # TODO: Implement this method.
-        #   1. Call self.preprocess(text) to get tokens.
-        #   2. Loop over the tokens.
-        #   3. Increase the score for positive words, decrease for negative words.
-        #   4. Return the total score.
-        #
-        # Hint: if you implement negation, you may want to look at pairs of tokens,
-        # like ("not", "happy") or ("never", "fun").
-        pass
+        # Define weighted sentiment words (higher weight = stronger signal)
+        weighted_positive = {
+            "love": 2, "amazing": 2, "awesome": 2, "great": 1, 
+            "good": 1, "excited": 1, "fun": 1, "awesome": 1
+        }
+        weighted_negative = {
+            "hate": 2, "terrible": 2, "awful": 2, "bad": 1, 
+            "sad": 1, "upset": 1, "stressed": 1, "tired": 1, "angry": 1
+        }
+        
+        # Define emoji/emoticon sentiment signals (stronger signals: +/-2)
+        positive_emojis = {":)", ";)", "😂", "🔥", "💪", "💯", "😎"}
+        negative_emojis = {":(", "😢", "😔", "💔", "😕"}
+        
+        # Words that negate sentiment (flip positive/negative)
+        negations = {"not", "never", "no", "isn't", "aren't", "wasn't", "don't", "didn't"}
+        
+        tokens = self.preprocess(text)
+        score = 0
+        
+        for i, token in enumerate(tokens):
+            # Check if previous token is a negation word
+            is_negated = (i > 0 and tokens[i-1] in negations)
+            
+            # Priority 1: Check weighted positive words (higher weight)
+            if token in weighted_positive:
+                weight = weighted_positive[token]
+                score += -weight if is_negated else weight
+            # Priority 2: Check regular positive words
+            elif token in self.positive_words:
+                score += -1 if is_negated else 1
+            # Priority 3: Check weighted negative words
+            elif token in weighted_negative:
+                weight = weighted_negative[token]
+                score += weight if is_negated else -weight
+            # Priority 4: Check regular negative words
+            elif token in self.negative_words:
+                score += 1 if is_negated else -1
+            # Priority 5: Check positive emojis (strong signal: +2)
+            elif token in positive_emojis:
+                score += -2 if is_negated else 2
+            # Priority 6: Check negative emojis (strong signal: -2)
+            elif token in negative_emojis:
+                score += 2 if is_negated else -2
+        
+        return score
 
     # ---------------------------------------------------------------------
     # Label prediction
@@ -105,12 +164,15 @@ class MoodAnalyzer:
         Just remember that whatever labels you return should match the labels
         you use in TRUE_LABELS in dataset.py if you care about accuracy.
         """
-        # TODO: Implement this method.
-        #   1. Call self.score_text(text) to get the numeric score.
-        #   2. Return "positive" if the score is above 0.
-        #   3. Return "negative" if the score is below 0.
-        #   4. Return "neutral" otherwise.
-        pass
+        score = self.score_text(text)
+        
+        # Use stricter thresholds to reduce false positives/negatives
+        if score >= 2:
+            return "positive"
+        elif score <= -2:
+            return "negative"
+        else:
+            return "neutral"
 
     # ---------------------------------------------------------------------
     # Explanations (optional but recommended)

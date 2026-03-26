@@ -36,6 +36,12 @@ NEGATIVE_WORDS = [
     "stressed",
     "hate",
     "boring",
+    "stuck",
+    "waiting",
+    "traffic",
+    "delay",
+    "rush",
+    "crowded",
 ]
 
 # ---------------------------------------------------------------------
@@ -50,6 +56,15 @@ SAMPLE_POSTS = [
     "This is fine",
     "So excited for the weekend",
     "I am not happy about this",
+    "just crushed my workout, feeling unstoppable 💪",
+    "honestly exhausted and over it all",
+    "the food was great but the service was awful 😕",
+    "vibing with my friends, no responsibilities rn 😎",
+    "this is so frustrating but whatever i'll figure it out",
+    "absolutely thrilled to be awake at 6am 😒",
+    "not bad, not great, just another day",
+    "the boss finally approved my idea!! 🎉 but also way more work now",
+    "lowkey love the chaos energy today",
 ]
 
 # Human labels for each post above.
@@ -65,6 +80,15 @@ TRUE_LABELS = [
     "neutral",   # "This is fine"
     "positive",  # "So excited for the weekend"
     "negative",  # "I am not happy about this"
+    "positive",  # "just crushed my workout, feeling unstoppable 💪"
+    "negative",  # "honestly exhausted and over it all"
+    "mixed",     # "the food was great but the service was awful 😕"
+    "positive",  # "vibing with my friends, no responsibilities rn 😎"
+    "mixed",     # "this is so frustrating but whatever i'll figure it out"
+    "negative",  # "absolutely thrilled to be awake at 6am 😒"
+    "neutral",   # "not bad, not great, just another day"
+    "mixed",     # "the boss finally approved my idea!! 🎉 but also way more work now"
+    "positive",  # "lowkey love the chaos energy today"
 ]
 
 # TODO: Add 5-10 more posts and labels.
